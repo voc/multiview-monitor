@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os, logging, subprocess, shlex, gi
-from gi.repository import Gst
+from gi.repository import Gst, GLib
 
 # import library components
 from lib.config import Config
@@ -11,6 +11,10 @@ class Source(object):
 		self.url = url
 		self.name = name
 
+		GLib.timeout_add_seconds(1, self.do_poll)
+		self.start()
+
+	def start(self):
 		# create an ipc pipe
 		self.pipe = os.pipe()
 
@@ -30,12 +34,14 @@ class Source(object):
 		)
 
 		self.log.debug('Starting Source-Process:\n%s', process)
-		self.process = subprocess.Popen(shlex.split(process), stdout=self.pipe[1])
-
+		self.process = subprocess.Popen(shlex.split(process),
+			stdout=self.pipe[1],
+			stderr=subprocess.DEVNULL,
+			stdin=subprocess.DEVNULL)
 
 		# pipe -> this process -> intervideosink
 		pipeline = """
-			fdsrc fd={fd} !
+			fdsrc fd={fd} timeout=5 !
 			queue !
 			matroskademux !
 			{caps} !
@@ -50,5 +56,11 @@ class Source(object):
 		self.pipeline = Gst.parse_launch(pipeline)
 		self.pipeline.set_state(Gst.State.PLAYING)
 
-		# FIXME on pipeline end, kill ffmpeg and restart both
-		# FIXME on ffmpeg end, kill pipeline and restart both
+	def do_poll(self):
+		ret = self.process.poll()
+		if ret is None:
+			return True
+
+		self.log.debug('Source-Process died, restarting')
+		self.start()
+		return True
