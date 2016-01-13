@@ -10,6 +10,7 @@ class Source(object):
 		self.log = logging.getLogger('Source[%s]' % name)
 		self.url = url
 		self.name = name
+		self.caps = Gst.Caps.from_string(Config.get('input', 'caps')).get_structure(0)
 
 		GLib.timeout_add_seconds(1, self.do_poll)
 		self.start()
@@ -18,19 +19,27 @@ class Source(object):
 		# create an ipc pipe
 		self.pipe = os.pipe()
 
+		w, h = self.caps.get_int('width')[1], self.caps.get_int('height')[1]
+
+		if w < 640 or h < 480:
+			raise RuntimeError('ebur128 video output-size must be at least 640x480')
+
+		# FIXME set ebur128 size parameter based on the input caps
 		# subprocess -> pipe
 		process = """
 			ffmpeg
 				-v warning
 				-i {url}
-				-filter_complex "[0:a] ebur128=video=1:meter=18 [v][a]"
+				-filter_complex "[0:a] ebur128=video=1:meter=18:size={w}x{h} [v][a]"
 				-map '[v]' -map '[a]'
 				-c:v rawvideo -c:a pcm_s16le
 				-pix_fmt yuv420p -r 25
 				-f matroska
 				pipe:
 		""".format(
-			url=self.url
+			url=self.url,
+			w=w,
+			h=h
 		)
 
 		self.log.debug('Starting Source-Process:\n%s', process)
