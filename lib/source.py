@@ -27,6 +27,7 @@ class Source(object):
 		# subprocess -> pipe
 		process = """
 			ffmpeg
+				-y
 				-v warning
 				-i {url}
 				-filter_complex "[0:a] ebur128=video=1:meter=18:size={w}x{h} [v][a]"
@@ -43,9 +44,7 @@ class Source(object):
 
 		self.log.debug('Starting Source-Process:\n%s', process)
 		self.process = subprocess.Popen(shlex.split(process),
-			stdout=self.pipe[1],
-			stderr=subprocess.DEVNULL,
-			stdin=subprocess.DEVNULL)
+			stdout=self.pipe[1])
 
 		# pipe -> this process -> intervideosink
 		pipeline = """
