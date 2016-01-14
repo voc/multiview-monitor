@@ -50,7 +50,7 @@ class Mixer(object):
 			pipeline += """
 				intervideosrc channel=in_{name} !
 					{caps} !
-					textoverlay text={name} !
+					textoverlay text={name} font-desc="Normal 40"!
 					mix.
 			""".format(
 				caps=Config.get('input', 'caps'),
