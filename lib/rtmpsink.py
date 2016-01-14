@@ -1,35 +1,74 @@
 #!/usr/bin/python3
-import os, logging, gi
-from gi.repository import Gst
+import os, logging, subprocess, shlex, gi
+from gi.repository import Gst, GLib
 
+# import library components
 from lib.config import Config
 
 class RtmpSink(object):
 	def __init__(self):
 		self.log = logging.getLogger('RtmpSink')
 
-		# intervideosrc -> encoder -> muxer -> rtmp
+		GLib.timeout_add_seconds(1, self.do_poll)
+		self.start()
+
+	def start(self):
+		# create an ipc pipe
+		self.pipe = os.pipe()
+
+		# intervideosrc -> pipe
 		pipeline = """
-			flvmux streamable=true name=mux !
-				rtmpsink location="{url}"
+			matroskamux name=mux !
+				fdsink fd={fd}
 
 			intervideosrc channel=out !
-				videoconvert !
-				x264enc !
+				{caps} !
 				queue !
 				mux.
 
 			audiotestsrc wave=silence !
 				audio/x-raw,channels=2,rate=44100 !
-				faac !
-				aacparse !
 				queue !
 				mux.
 		""".format(
 			caps=Config.get('output', 'caps'),
-			url=Config.get('output', 'rtmp')
+			fd=self.pipe[1],
 		)
 
 		self.log.debug('Starting Sink-Pipeline:\n%s', pipeline)
 		self.pipeline = Gst.parse_launch(pipeline)
 		self.pipeline.set_state(Gst.State.PLAYING)
+
+		# pipe -> subprocess
+		process = """
+			ffmpeg
+				-y
+				-i pipe:
+				-threads:0 0
+
+				-c:v libx264
+				-maxrate:v:0 3000k -bufsize:v:0 8192k -crf:0 21
+				-pix_fmt:0 yuv420p -profile:v:0 main -g:v:0 25
+				-preset:v:0 veryfast
+				-map 0:v
+
+				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a:2 2
+				-map 0:a
+
+				-y -f flv {url}
+		""".format(
+			url=Config.get('output', 'rtmp'),
+		)
+
+		self.log.debug('Starting Sink-Process:\n%s', process)
+		self.process = subprocess.Popen(shlex.split(process),
+			stdin=self.pipe[0])
+
+	def do_poll(self):
+		ret = self.process.poll()
+		if ret is None:
+			return True
+
+		self.log.debug('Sink-Process died, restarting')
+		self.start()
+		return True
