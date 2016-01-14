@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os, logging, gi
+import os, logging, gi, math
 from gi.repository import Gst
 
 # import library components
@@ -9,18 +9,38 @@ class Mixer(object):
 	def __init__(self):
 		self.log = logging.getLogger('Mixer')
 
+		caps = Gst.Caps.from_string(Config.get('output', 'caps')).get_structure(0)
+		ow, oh = caps.get_int('width')[1], caps.get_int('height')[1]
 
 		grid = Config.get('output', 'grid')
-		[w, h] = [int(n) for n in grid.split('x', 1)]
+		gw, gh = [int(n) for n in grid.split('x', 1)]
 
-		self.log.debug('Greating grid of %ux%u tiles', w, h)
+		tw, th = math.floor(ow / gw), math.floor(oh / gh)
 
+		self.log.info('Greating grid of %ux%u tiles with %ux%upx each to fill a viewport of %ux%upx', gw, gh, tw, th, ow, oh)
+
+		# FIXME calculate actual positions ;)
 		# intervideosrc(es) -> videomixer -> intervideosink
 		pipeline = """
 			compositor name=mix
-				sink_0::xpos=0 sink_0::ypos=0
-				sink_1::xpos=960 sink_1::ypos=0 !
-			{caps} !
+		"""
+		for tx in range(0, gw):
+			for ty in range(0, gh):
+				idx = tx*gh+ty
+				txpx, typx = tx*tw, ty*th
+				self.log.debug('Placing tile #%u %u/%u at %u/%upx in the viewport', idx, tx, ty, txpx, typx)
+				pipeline += """
+					sink_{idx}::xpos={x} sink_{idx}::ypos={y} sink_{idx}::width={w} sink_{idx}::height={h}
+				""".format(
+					idx=idx,
+					x=txpx,
+					y=typx,
+					w=tw,
+					h=th,
+				)
+
+		pipeline += """
+			! {caps} !
 			intervideosink channel=out
 		""".format(
 			caps=Config.get('output', 'caps'),
