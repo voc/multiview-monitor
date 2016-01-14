@@ -24,7 +24,6 @@ class Source(object):
 		if w < 640 or h < 480:
 			raise RuntimeError('ebur128 video output-size must be at least 640x480')
 
-		# FIXME set ebur128 size parameter based on the input caps
 		# subprocess -> pipe
 		process = """
 			ffmpeg
