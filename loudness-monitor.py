@@ -24,28 +24,27 @@ GObject.threads_init()
 from lib.args import Args
 from lib.pipeline import Pipeline
 from lib.loghandler import LogHandler
+from lib.mainloop import MainLoop
 
 # main class
 class LoudnessMonitor(object):
 	def __init__(self):
 		self.log = logging.getLogger('LoudnessMonitor')
-		self.log.debug('creating GObject-MainLoop')
-		self.mainloop = GObject.MainLoop()
 
 		# initialize subsystem
 		self.log.debug('creating A/V-Pipeline')
 		self.pipeline = Pipeline()
 
 	def run(self):
-		self.log.info('running GObject-MainLoop')
 		try:
-			self.mainloop.run()
+			self.log.info('running GObject-MainLoop')
+			MainLoop.run()
 		except KeyboardInterrupt:
 			self.log.info('Terminated via Ctrl-C')
 
 	def quit(self):
 		self.log.info('quitting GObject-MainLoop')
-		self.mainloop.quit()
+		MainLoop.quit()
 
 
 # run mainclass
