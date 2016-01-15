@@ -43,6 +43,7 @@ class RtmpSink(object):
 		process = """
 			ffmpeg
 				-y
+				-v warning
 				-i pipe:
 				-threads:0 0
 
