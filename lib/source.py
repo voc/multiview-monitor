@@ -29,8 +29,12 @@ class Source(object):
 			ffmpeg
 				-y
 				-v warning
+				-re
 				-i {url}
-				-filter_complex "[0:a] ebur128=video=1:meter=18:size={w}x{h} [v][a]"
+				-filter_complex "
+					[0:a] ebur128=video=1:meter=18:size={w}x{h} [iv][a],
+					[iv] fps=25 [v]
+				"
 				-map '[v]' -map '[a]'
 				-c:v rawvideo -c:a pcm_s16le
 				-pix_fmt yuv420p -r 25
