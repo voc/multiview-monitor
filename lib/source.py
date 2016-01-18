@@ -37,7 +37,7 @@ class Source(object):
 
 		# pipe -> this process -> intervideosink
 		pipeline = """
-			fdsrc fd={fd} timeout=5 !
+			fdsrc fd={fd} !
 			queue !
 			matroskademux !
 			{caps} !
