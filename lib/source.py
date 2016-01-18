@@ -12,13 +12,13 @@ class Source(object):
 		self.name = name
 		self.caps = Gst.Caps.from_string(Config.get('input', 'caps')).get_structure(0)
 
+		# create an ipc pipe
+		self.pipe = os.pipe()
+
 		GLib.timeout_add_seconds(1, self.do_poll)
 		self.start()
 
 	def start(self):
-		# create an ipc pipe
-		self.pipe = os.pipe()
-
 		w, h = self.caps.get_int('width')[1], self.caps.get_int('height')[1]
 
 		if w < 640 or h < 480:
@@ -52,11 +52,19 @@ class Source(object):
 		self.pipeline = Gst.parse_launch(pipeline)
 		self.pipeline.set_state(Gst.State.PLAYING)
 
+	def stop(self):
+		self.pipeline.set_state(Gst.State.NULL)
+		self.pipeline = None
+
+		#self.process.kill()
+		self.process = None
+
 	def do_poll(self):
 		ret = self.process.poll()
 		if ret is None:
 			return True
 
 		self.log.debug('Source-Process died, restarting')
+		self.stop()
 		self.start()
 		return True
