@@ -30,16 +30,17 @@ class ServerSink(object):
 			fd=self.pipe[1],
 		)
 
-		for name, url in Config.items('sources'):
+		for idx, name in enumerate(Config.options('sources')):
 			pipeline += """
 				interaudiosrc channel=in_a_{name} !
 					{acaps} !
 					queue !
-					mux.
+					mux.audio_{idx}
 			""".format(
 				acaps=Config.get('input', 'audiocaps'),
 				fd=self.pipe[1],
 				name=name,
+				idx=idx,
 			)
 
 		self.log.debug('Starting Sink-Pipeline:\n%s', pipeline)
@@ -56,14 +57,23 @@ class ServerSink(object):
 				-threads:0 0
 
 				-c:v libx264
-				-maxrate:v:0 3000k -bufsize:v:0 8192k -crf:0 21
+				-maxrate:v:0 5000k -bufsize:v:0 8192k -crf:0 21
 				-pix_fmt:0 yuv420p -profile:v:0 main -g:v:0 25
 				-preset:v:0 ultrafast
 				-map 0:v
 
 				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a 1
 				-map 0:a
+		"""
+		for idx, name in enumerate(Config.options('sources')):
+			process += """
+				-metadata:s:a:{idx} title="{name}"
+			""".format(
+				idx=idx,
+				name=name,
+			)
 
+		process += """
 				-y -f mpegts {url}
 		""".format(
 			url=Config.get('output', 'url'),
