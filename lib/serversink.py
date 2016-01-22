@@ -5,9 +5,9 @@ from gi.repository import Gst, GLib
 # import library components
 from lib.config import Config
 
-class RtmpSink(object):
+class ServerSink(object):
 	def __init__(self):
-		self.log = logging.getLogger('RtmpSink')
+		self.log = logging.getLogger('ServerSink')
 
 		GLib.timeout_add_seconds(1, self.do_poll)
 		self.start()
@@ -64,7 +64,7 @@ class RtmpSink(object):
 				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a:2 2
 				-map 0:a
 
-				-y -f flv {url}
+				-y -f ts {url}
 		""".format(
 			url=Config.get('output', 'rtmp'),
 		)

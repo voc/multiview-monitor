@@ -5,7 +5,7 @@ import os, logging, subprocess
 from lib.config import Config
 from lib.source import Source
 from lib.localsink import LocalSink
-from lib.rtmpsink import RtmpSink
+from lib.serversink import ServerSink
 from lib.mixer import Mixer
 
 class Pipeline(object):
@@ -18,8 +18,8 @@ class Pipeline(object):
 
 		self.mixer = Mixer()
 
-		if Config.has_option('output', 'rtmp'):
-			self.sink = RtmpSink()
+		if Config.has_option('output', 'url'):
+			self.sink = ServerSink()
 		else:
 			self.sink = LocalSink()
 
