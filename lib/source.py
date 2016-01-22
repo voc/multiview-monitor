@@ -42,10 +42,12 @@ class Source(object):
 				matroskademux name=demux
 
 			demux. !
+				queue !
 				{vcaps} !
 				intervideosink channel=in_v_{name}
 
 			demux. !
+				queue !
 				{acaps} !
 				interaudiosink channel=in_a_{name}
 		""".format(
