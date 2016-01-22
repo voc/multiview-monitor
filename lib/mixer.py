@@ -48,12 +48,12 @@ class Mixer(object):
 
 		for name, url in Config.items('sources'):
 			pipeline += """
-				intervideosrc channel=in_{name} !
-					{caps} !
+				intervideosrc channel=in_v_{name} !
+					{vcaps} !
 					textoverlay text={name} font-desc="Normal 40"!
 					mix.
 			""".format(
-				caps=Config.get('input', 'caps'),
+				vcaps=Config.get('input', 'videocaps'),
 				name=name
 			)
 

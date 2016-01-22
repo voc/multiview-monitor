@@ -25,19 +25,27 @@ class RtmpSink(object):
 				{caps} !
 				queue !
 				mux.
-
-			audiotestsrc wave=silence !
-				audio/x-raw,channels=2,rate=44100 !
-				queue !
-				mux.
 		""".format(
 			caps=Config.get('output', 'caps'),
 			fd=self.pipe[1],
 		)
 
+		for name, url in Config.items('sources'):
+			pipeline += """
+				interaudiosrc channel=in_a_{name} !
+					{acaps} !
+					queue !
+					mux.
+			""".format(
+				acaps=Config.get('input', 'audiocaps'),
+				fd=self.pipe[1],
+				name=name,
+			)
+
 		self.log.debug('Starting Sink-Pipeline:\n%s', pipeline)
 		self.pipeline = Gst.parse_launch(pipeline)
 		self.pipeline.set_state(Gst.State.PLAYING)
+
 
 		# pipe -> subprocess
 		process = """

@@ -10,7 +10,7 @@ class Source(object):
 		self.log = logging.getLogger('Source[%s]' % name)
 		self.url = url
 		self.name = name
-		self.caps = Gst.Caps.from_string(Config.get('input', 'caps')).get_structure(0)
+		self.caps = Gst.Caps.from_string(Config.get('input', 'videocaps')).get_structure(0)
 
 		# create an ipc pipe
 		self.pipe = os.pipe()
@@ -38,13 +38,20 @@ class Source(object):
 		# pipe -> this process -> intervideosink
 		pipeline = """
 			fdsrc fd={fd} !
-			queue !
-			matroskademux !
-			{caps} !
-			intervideosink channel=in_{name}
+				queue !
+				matroskademux name=demux
+
+			demux. !
+				{vcaps} !
+				intervideosink channel=in_v_{name}
+
+			demux. !
+				{acaps} !
+				interaudiosink channel=in_a_{name}
 		""".format(
 			fd=self.pipe[0],
-			caps=Config.get('input', 'caps'),
+			vcaps=Config.get('input', 'videocaps'),
+			acaps=Config.get('input', 'audiocaps'),
 			name=self.name
 		)
 
