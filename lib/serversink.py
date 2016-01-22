@@ -61,12 +61,12 @@ class ServerSink(object):
 				-preset:v:0 ultrafast
 				-map 0:v
 
-				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a:2 2
+				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a 1
 				-map 0:a
 
-				-y -f ts {url}
+				-y -f mpegts {url}
 		""".format(
-			url=Config.get('output', 'rtmp'),
+			url=Config.get('output', 'url'),
 		)
 
 		self.log.debug('Starting Sink-Process:\n%s', process)
