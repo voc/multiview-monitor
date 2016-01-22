@@ -50,7 +50,7 @@ class RtmpSink(object):
 				-c:v libx264
 				-maxrate:v:0 3000k -bufsize:v:0 8192k -crf:0 21
 				-pix_fmt:0 yuv420p -profile:v:0 main -g:v:0 25
-				-preset:v:0 veryfast
+				-preset:v:0 ultrafast
 				-map 0:v
 
 				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a:2 2
