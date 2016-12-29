@@ -6,10 +6,11 @@ from gi.repository import Gst, GLib
 from lib.config import Config
 
 class Source(object):
-	def __init__(self, name, url):
+	def __init__(self, name, url, sectionname='input'):
 		self.log = logging.getLogger('Source[%s]' % name)
 		self.url = url
 		self.name = name
+		self.sectionname = sectionname
 		self.caps = Gst.Caps.from_string(Config.get('input', 'caps')).get_structure(0)
 
 		# create an ipc pipe
@@ -25,7 +26,7 @@ class Source(object):
 			raise RuntimeError('ebur128 video output-size must be at least 640x480')
 
 		# subprocess -> pipe
-		process = Config.get('input', 'command').format(
+		process = Config.get(self.sectionname, 'command').format(
 			url=self.url,
 			w=w,
 			h=h
@@ -40,7 +41,7 @@ class Source(object):
 			fdsrc fd={fd} !
 			queue !
 			matroskademux !
-			{caps} !
+			{caps} ! capssetter caps="video/x-raw,interlace-mode=progressive" !
 			intervideosink channel=in_{name}
 		""".format(
 			fd=self.pipe[0],

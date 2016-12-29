@@ -25,5 +25,12 @@ class Pipeline(object):
 
 		self.sources = []
 		for name, url in Config.items('sources'):
-			self.sources.append(Source(name, url))
-
+			if name.endswith('_v'):
+				self.log.debug("adding as inputvideo")
+				try:
+					self.sources.append(Source(name, url, "inputvideo"))
+				except:
+					self.log.warning("section inputvideo not present in config!")
+			else:
+				self.log.debug("adding as input")
+				self.sources.append(Source(name, url))
