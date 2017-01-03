@@ -47,20 +47,18 @@ class Mixer(object):
 					source.type, source.width, source.height,
 					pos_x, pos_y)
 
+				pipeline += """
+					sink_{index}::xpos={x} sink_{index}::ypos={y} sink_{index}::width={width} sink_{index}::height={height}
+				""".format(
+					index=index,
+					x=pos_x,
+					y=pos_y,
+					width=source.width,
+					height=source.height,
+				)
+
 				pos_y += source.height
 				col_w = max(col_w, source.width)
-
-				# txpx, typx = tx*tw, ty*th
-				# self.log.debug('Placing tile #%u %u/%u at %u/%upx in the viewport', idx, tx, ty, txpx, typx)
-				# pipeline += """
-				# 	sink_{idx}::xpos={x} sink_{idx}::ypos={y} sink_{idx}::width={w} sink_{idx}::height={h}
-				# """.format(
-				# 	idx=idx,
-				# 	x=txpx,
-				# 	y=typx,
-				# 	w=tw,
-				# 	h=th,
-				# )
 
 		self.log.debug('')
 
@@ -71,17 +69,20 @@ class Mixer(object):
 
 
 		pipeline += """
-			intervideosink channel=out
+			! intervideosink channel=out
 		""".format(
 		)
 
-		for name, url in Config.items('sources'):
+		for source in self.sources:
 			pipeline += """
 				intervideosrc channel=in_{name} !
-					textoverlay text={name} font-desc="Normal 40"!
+					video/x-raw,width={width},height={height} !
+					textoverlay text={name} font-desc="Normal 40" !
 					mix.
 			""".format(
-				name=name
+				name=source.name,
+				width=source.width,
+				height=source.height,
 			)
 
 		self.log.debug('Configured Mix-Pipeline:\n%s', pipeline)
