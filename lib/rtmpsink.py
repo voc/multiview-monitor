@@ -6,23 +6,24 @@ from gi.repository import Gst, GLib
 from lib.config import Config
 
 class RtmpSink(object):
-	def __init__(self):
+	def __init__(self, url):
 		self.log = logging.getLogger('RtmpSink')
+		self.url = url
 
-		GLib.timeout_add_seconds(1, self.do_poll)
-		self.start()
-
-	def start(self):
 		# create an ipc pipe
 		self.pipe = os.pipe()
 
+	def start(self):
+		GLib.timeout_add_seconds(1, self.do_poll)
+		self.start_process();
+
+	def start_process(self):
 		# intervideosrc -> pipe
 		pipeline = """
 			matroskamux name=mux !
 				fdsink fd={fd}
 
 			intervideosrc channel=out !
-				{caps} !
 				queue !
 				mux.
 
@@ -31,7 +32,6 @@ class RtmpSink(object):
 				queue !
 				mux.
 		""".format(
-			caps=Config.get('output', 'caps'),
 			fd=self.pipe[1],
 		)
 
@@ -58,7 +58,7 @@ class RtmpSink(object):
 
 				-y -f flv {url}
 		""".format(
-			url=Config.get('output', 'rtmp'),
+			url=self.url,
 		)
 
 		self.log.debug('Starting Sink-Process:\n%s', process)

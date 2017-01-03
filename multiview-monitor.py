@@ -36,6 +36,9 @@ class LoudnessMonitor(object):
 		self.pipeline = Pipeline()
 
 	def run(self):
+		self.pipeline.configure()
+		self.pipeline.start()
+
 		try:
 			self.log.info('running GObject-MainLoop')
 			MainLoop.run()

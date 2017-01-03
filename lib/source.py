@@ -8,27 +8,27 @@ from lib.config import Config
 class Source(object):
 	def __init__(self, name, url):
 		self.log = logging.getLogger('Source[%s]' % name)
-		self.url = url
+		self.type, self.url = url.split(':', 1)
 		self.name = name
-		self.caps = Gst.Caps.from_string(Config.get('input', 'caps')).get_structure(0)
+
+		section = 'input:'+self.type
+		self.width = int(Config.get(section, 'width'));
+		self.height = int(Config.get(section, 'height'));
+		self.command = Config.get(section, 'command');
 
 		# create an ipc pipe
 		self.pipe = os.pipe()
 
-		GLib.timeout_add_seconds(1, self.do_poll)
-		self.start()
-
 	def start(self):
-		w, h = self.caps.get_int('width')[1], self.caps.get_int('height')[1]
+		GLib.timeout_add_seconds(1, self.do_poll)
+		self.start_process()
 
-		if w < 640 or h < 480:
-			raise RuntimeError('ebur128 video output-size must be at least 640x480')
-
+	def start_process(self):
 		# subprocess -> pipe
-		process = Config.get('input', 'command').format(
+		process = self.command.format(
 			url=self.url,
-			w=w,
-			h=h
+			w=self.width,
+			h=self.height
 		)
 
 		self.log.debug('Starting Source-Process:\n%s', process)
@@ -40,11 +40,9 @@ class Source(object):
 			fdsrc fd={fd} !
 			queue !
 			matroskademux !
-			{caps} !
 			intervideosink channel=in_{name}
 		""".format(
 			fd=self.pipe[0],
-			caps=Config.get('input', 'caps'),
 			name=self.name
 		)
 
@@ -52,7 +50,7 @@ class Source(object):
 		self.pipeline = Gst.parse_launch(pipeline)
 		self.pipeline.set_state(Gst.State.PLAYING)
 
-	def stop(self):
+	def stop_process(self):
 		self.pipeline.set_state(Gst.State.NULL)
 		self.pipeline = None
 
@@ -65,6 +63,6 @@ class Source(object):
 			return True
 
 		self.log.debug('Source-Process died, restarting')
-		self.stop()
-		self.start()
+		self.stop_process()
+		self.start_process()
 		return True

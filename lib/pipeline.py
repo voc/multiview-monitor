@@ -12,18 +12,29 @@ class Pipeline(object):
 	def __init__(self):
 		self.log = logging.getLogger('Pipeline')
 
+	def configure(self):
 		sources = Config.options('sources')
 		if len(sources) < 1:
 			raise RuntimeError('At least one Source must be configured!')
 
-		self.mixer = Mixer()
-
-		if Config.has_option('output', 'rtmp'):
-			self.sink = RtmpSink()
+		if Config.has_option('output', 'rtmp_push_url'):
+			rtmp_push_url = Config.get('output', 'rtmp_push_url')
+			self.sink = RtmpSink(rtmp_push_url)
 		else:
 			self.sink = LocalSink()
 
+		self.mixer = Mixer()
+
 		self.sources = []
 		for name, url in Config.items('sources'):
-			self.sources.append(Source(name, url))
+			source = Source(name, url)
+			self.mixer.append(source)
+			self.sources.append(source)
 
+		self.mixer.configure()
+
+	def start(self):
+		self.sink.start()
+		self.mixer.start()
+		for source in self.sources:
+			source.start()
