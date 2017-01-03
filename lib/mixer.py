@@ -6,6 +6,9 @@ from gi.repository import Gst
 from lib.config import Config
 
 class Mixer(object):
+	output_width = 0
+	output_height = 0
+
 	def __init__(self):
 		self.log = logging.getLogger('Mixer')
 		self.sources = []
@@ -61,10 +64,10 @@ class Mixer(object):
 
 		self.log.debug('')
 
-		output_width = pos_x + col_w
-		output_height = pos_y
+		self.output_width = pos_x + col_w
+		self.output_height = pos_y
 		self.log.info('Calculated final grid-size to be %ux%upx',
-			output_width, output_height)
+			self.output_width, self.output_height)
 
 
 		pipeline += """

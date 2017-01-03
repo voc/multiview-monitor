@@ -17,12 +17,6 @@ class Pipeline(object):
 		if len(sources) < 1:
 			raise RuntimeError('At least one Source must be configured!')
 
-		if Config.has_option('output', 'rtmp_push_url'):
-			rtmp_push_url = Config.get('output', 'rtmp_push_url')
-			self.sink = RtmpSink(rtmp_push_url)
-		else:
-			self.sink = LocalSink()
-
 		self.mixer = Mixer()
 
 		self.sources = []
@@ -32,6 +26,13 @@ class Pipeline(object):
 			self.sources.append(source)
 
 		self.mixer.configure()
+
+		if Config.has_option('output', 'rtmp_push_url'):
+			rtmp_push_url = Config.get('output', 'rtmp_push_url')
+			self.sink = RtmpSink(rtmp_push_url, self.mixer.output_width, self.mixer.output_height)
+
+		else:
+			self.sink = LocalSink(self.mixer.output_width, self.mixer.output_height)
 
 	def start(self):
 		self.sink.start()

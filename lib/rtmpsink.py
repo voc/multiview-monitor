@@ -6,9 +6,11 @@ from gi.repository import Gst, GLib
 from lib.config import Config
 
 class RtmpSink(object):
-	def __init__(self, url):
+	def __init__(self, url, width, height):
 		self.log = logging.getLogger('RtmpSink')
 		self.url = url
+		self.width = width
+		self.height = height
 
 		# create an ipc pipe
 		self.pipe = os.pipe()
@@ -24,6 +26,7 @@ class RtmpSink(object):
 				fdsink fd={fd}
 
 			intervideosrc channel=out !
+				video/x-raw,width={width},height={height} !
 				queue !
 				mux.
 
@@ -32,6 +35,8 @@ class RtmpSink(object):
 				queue !
 				mux.
 		""".format(
+			width=self.width,
+			height=self.height,
 			fd=self.pipe[1],
 		)
 
