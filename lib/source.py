@@ -40,6 +40,7 @@ class Source(object):
 			fdsrc fd={fd} !
 			queue !
 			matroskademux !
+			capssetter caps=video/x-raw,interlace-mode=progressive !
 			intervideosink channel=in_{name}
 		""".format(
 			fd=self.pipe[0],
