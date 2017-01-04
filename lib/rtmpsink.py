@@ -58,7 +58,7 @@ class RtmpSink(object):
 				-preset:v:0 veryfast
 				-map 0:v
 
-				-c:a libfdk_aac -b:a 96k -ar 44100 -ac:a:2 2
+				-strict 2 -c:a aac -b:a 96k -ar 44100 -ac:a:2 2
 				-map 0:a
 
 				-y -f flv {url}
