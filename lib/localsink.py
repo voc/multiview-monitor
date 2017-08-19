@@ -6,22 +6,22 @@ from lib.config import Config
 from lib.mainloop import MainLoop
 
 class LocalSink(object):
-	def __init__(self):
+	def __init__(self, width, height):
 		self.log = logging.getLogger('LocalSink')
 
 		# FIXME intervideosrc -> encoder -> display
 		pipeline = """
 			intervideosrc channel=out !
-			{caps} !
+			video/x-raw,width={width},height={height} !
 			videoconvert !
 			xvimagesink
 		""".format(
-			caps=Config.get('output', 'caps')
+			width=width,
+			height=height,
 		)
 
 		self.log.debug('Starting Sink-Pipeline:\n%s', pipeline)
 		self.pipeline = Gst.parse_launch(pipeline)
-		self.pipeline.set_state(Gst.State.PLAYING)
 
 		self.log.debug('Binding End-of-Stream-Signal on Sink-Pipeline')
 		self.pipeline.bus.add_signal_watch()
@@ -30,3 +30,6 @@ class LocalSink(object):
 	def on_eos(self, bus, message):
 		self.log.debug('Received End-of-Stream-Signal on Source-Pipeline, shutting down')
 		MainLoop.quit()
+
+	def start(self):
+		self.pipeline.set_state(Gst.State.PLAYING)
