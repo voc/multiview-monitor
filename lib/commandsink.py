@@ -5,10 +5,10 @@ from gi.repository import Gst, GLib
 # import library components
 from lib.config import Config
 
-class RtmpSink(object):
-	def __init__(self, url, width, height):
+class CommandSink(object):
+	def __init__(self, command, width, height):
 		self.log = logging.getLogger('RtmpSink')
-		self.url = url
+		self.command = command
 		self.width = width
 		self.height = height
 
@@ -45,29 +45,13 @@ class RtmpSink(object):
 		self.pipeline.set_state(Gst.State.PLAYING)
 
 		# pipe -> subprocess
-		process = """
-			ffmpeg
-				-y
-				-v warning
-				-i pipe:
-				-threads:0 0
-
-				-c:v libx264
-				-maxrate:v:0 3000k -bufsize:v:0 8192k -crf:0 21
-				-pix_fmt:0 yuv420p -profile:v:0 main -g:v:0 25
-				-preset:v:0 veryfast
-				-map 0:v
-
-				-strict 2 -c:a aac -b:a 96k -ar 44100 -ac:a:2 2
-				-map 0:a
-
-				-y -f flv {url}
-		""".format(
-			url=self.url,
+		command = self.command.format(
+			width=self.width,
+			height=self.height
 		)
 
-		self.log.debug('Starting Sink-Process:\n%s', process)
-		self.process = subprocess.Popen(shlex.split(process),
+		self.log.debug('Starting Sink-Process:\n%s', command)
+		self.process = subprocess.Popen(shlex.split(command),
 			stdin=self.pipe[0])
 
 	def do_poll(self):
