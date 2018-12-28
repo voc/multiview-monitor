@@ -5,4 +5,12 @@ The resulting multiview of the loudness charts can now be streamed back to the s
 ![Example Output](screenshot.jpg)
 
 # Run with Docker
+```
 docker run --rm --volume $(pwd)/config-34c3.ini:/opt/multiview-monitor.ini mazdermind/multiview-monitor:latest
+```
+
+# Create and Publish new Docker-Image
+```
+docker build --tag mazdermind/multiview-monitor:latest .
+docker push mazdermind/multiview-monitor:latest
+```
