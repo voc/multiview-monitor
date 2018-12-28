@@ -20,8 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3-gi gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 gir1.2-gtk-3.0 \
 		&& apt-get clean
 
-RUN wget --progress=bar:force https://c3voc.mazdermind.de/ffmpeg-xenial-ebur128-patch -O /usr/local/bin/ffmpeg && \
-	chmod +x /usr/local/bin/ffmpeg && \
+RUN wget --progress=bar:force https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -O /opt/ffmpeg-release-amd64-static.tar.xz && \
+	cd /opt/ && tar -xvaf /opt/ffmpeg-release-amd64-static.tar.xz && \
+	ln -s /opt/ffmpeg-4.1-64bit-static/ffmpeg /usr/bin/ffmpeg && \
 	which ffmpeg
 
 VOLUME ["/opt/multiview-monitor.ini"]
