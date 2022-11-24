@@ -41,6 +41,9 @@ class Mixer(object):
 			for tile_y in range(0, grid_height):
 				index = tile_x * grid_height + tile_y
 
+				if index >= len(self.sources):
+					break
+
 				source = self.sources[index]
 				self.log.debug('Placing tile #%2u %u/%u of type %10s (size: %4u/%4upx) at %4u/%4upx in the viewport',
 					index, tile_x, tile_y,
